@@ -1,9 +1,7 @@
 import * as  multer from 'multer';
-import * as Storage from '@google-cloud/storage';
-import { Bucket, ConfigurationObject } from '@google-cloud/storage';
+import { Bucket, type ConfigurationObject, Storage, WriteStreamOptions } from '@google-cloud/storage';
 import * as uuid from 'uuid/v1';
 import { Request } from 'express';
-const storage: (options?:ConfigurationObject)=>Storage = require('@google-cloud/storage');
 
 export default class MulterGoogleCloudStorage implements multer.StorageEngine {
 
@@ -40,11 +38,15 @@ export default class MulterGoogleCloudStorage implements multer.StorageEngine {
 			throw new Error('You have to specify project id for Google Cloud Storage to work.');
 		}
 
-		if (!opts.keyFilename) {
-			throw new Error('You have to specify credentials key file for Google Cloud Storage to work.');
+		const storageOpts: ConfigurationObject = {
+			projectId: opts.projectId,
+		};
+
+		if (opts.keyFilename) {
+			storageOpts.keyFilename = opts.keyFilename;
 		}
 
-		this.gcobj = storage({
+		this.gcobj = new Storage({
 			projectId: opts.projectId,
 			keyFilename: opts.keyFilename
 		});
@@ -67,7 +69,7 @@ export default class MulterGoogleCloudStorage implements multer.StorageEngine {
 				}
 				var gcFile = this.gcsBucket.file(filename);
 
-				const streamOpts: Storage.WriteStreamOptions = {
+				const streamOpts: WriteStreamOptions = {
 					predefinedAcl: this.options.acl || 'private'
 				};
 
